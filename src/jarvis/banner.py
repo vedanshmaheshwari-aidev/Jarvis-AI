@@ -1,0 +1,10 @@
+def show_banner():
+    print()
+    print("=" * 50)
+    print("🤖 Jarvis AI OS🤖")
+    print("Version: 0.1.0")
+    print("=" * 50)
+    print()
+    print("Type 'exit' to quit")
+    print("Type 'clear' to clear the screen")
+    print()

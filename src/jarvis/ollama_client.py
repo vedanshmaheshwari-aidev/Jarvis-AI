@@ -8,7 +8,8 @@ class OllamaClient:
 
     def chat(self, message: str) -> str:
         response = self.client.chat(model=config.MODEL,
-                                    messages=[{"role": "user",
+                                    messages=[{
+                                               "role": "user",
                                                "content": message}],
                                                )
         return response['message']['content']

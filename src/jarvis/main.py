@@ -1,29 +1,56 @@
-# from jarvis.config import config
+import os
+import time
 
-# def main():
-#     print("=" * 40)
-#     print(config.APP_NAME)
-#     print(f"Version: {config.VERSION}")
-#     print(f"Model: {config.MODEL}")
-#     print("=" * 40)
-
-# if __name__ == "__main__":
-#     main()    
+from jarvis.banner import show_banner
 from jarvis.ollama_client import ollama_client
 
-
+def clear_screen():
+    os.system("cls" if os.name == "nt" else "clear")
 def main():
-    print("=" * 40)
-    print("Jarvis AI OS")
-    print("=" * 40)
+    clear_screen()
+    show_banner()
 
-    question = input("You: ")
+    while True:
+        question = input("You > ").strip()
 
-    answer = ollama_client.chat(question)
+        if not question:
+            continue
 
-    print("\nJarvis:")
-    print(answer)
+        if question.lower() in ["exit", "quit"]:
+            print("\n 👋 Goodbye")
+            break
+
+        if question.lower() == "clear":
+            clear_screen()
+            show_banner()
+            continue
+
+
+        start = time.perf_counter()
+
+        answer = ollama_client.chat(question)
+
+        end = time.perf_counter()
+
+        print("\n Jarvis >")
+        print(answer)
+        print(f"\n ⏱️ Response time: {end - start:.2f} seconds\n")
 
 
 if __name__ == "__main__":
     main()
+
+#     print("=" * 40)
+#     print("Jarvis AI OS")
+#     print("=" * 40)
+
+#     question = input("You: ")
+
+#     answer = ollama_client.chat(question)
+
+#     print("\nJarvis:")
+#     print(answer)
+
+
+# if __name__ == "__main__":
+#     main()
