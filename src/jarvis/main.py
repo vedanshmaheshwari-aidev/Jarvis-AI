@@ -1,5 +1,6 @@
 import os
 import time
+from xml.parsers.expat import model
 
 
 from jarvis.banner import show_banner
@@ -32,14 +33,19 @@ def main():
 
         model = brain.choose_model(question)
 
-        print(f"\n  🤖 Using model: {model}")
+        model_name =  "⚡ Fast Model" if model == "qwen2.5:3b" else "🧠 Reasoning Model"
 
-        answer = ollama_client.chat(model,question)
+        print(f"\n {model_name} ({model})")
+
+        # answer = ollama_client.chat(model,question)
+
+
+        print("\n⚡ Generating...\n")
+        print("Jarvis > ", end="", flush=True)
+        ollama_client.chat(model,question)
 
         end = time.perf_counter()
 
-        print("\n Jarvis >")
-        print(answer)
         print(f"\n ⏱️ Response time: {end - start:.2f} seconds\n")
 
 
