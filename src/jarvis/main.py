@@ -1,7 +1,9 @@
 import os
 import time
 
+
 from jarvis.banner import show_banner
+from jarvis.brain import brain
 from jarvis.ollama_client import ollama_client
 
 def clear_screen():
@@ -28,7 +30,11 @@ def main():
 
         start = time.perf_counter()
 
-        answer = ollama_client.chat(question)
+        model = brain.choose_model(question)
+
+        print(f"\n  🤖 Using model: {model}")
+
+        answer = ollama_client.chat(model,question)
 
         end = time.perf_counter()
 
