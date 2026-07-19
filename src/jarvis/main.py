@@ -60,17 +60,3 @@ def main():
 if __name__ == "__main__":
     main()
 
-#     print("=" * 40)
-#     print("Jarvis AI OS")
-#     print("=" * 40)
-
-#     question = input("You: ")
-
-#     answer = ollama_client.chat(question)
-
-#     print("\nJarvis:")
-#     print(answer)
-
-
-# if __name__ == "__main__":
-#     main()
