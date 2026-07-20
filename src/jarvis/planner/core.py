@@ -30,14 +30,14 @@ class Planner:
         for agent in agents:
 
             task = Task(
-                agent=agent.name,
+                agent=agent,
                 action=question,
                 priority=agent.priority,
                 requires_llm=agent.requires_llm,
             )
 
             tasks.append(task)
-
+ 
         return scheduler.schedule(tasks)
 
 

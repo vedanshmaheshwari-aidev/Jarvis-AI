@@ -9,6 +9,7 @@ Every task is assigned to exactly one Agent.
 
 from dataclasses import dataclass, field
 from typing import Any
+from jarvis.planner.registry import AgentRule
 import uuid
 
 
@@ -33,7 +34,7 @@ class Task:
     # ---------------------------------------------------------
 
     # Which Agent should execute this task?
-    agent: str = ""
+    agent: AgentRule
 
     # What should the Agent do?
     action: str = ""

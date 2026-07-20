@@ -11,7 +11,7 @@ It simply reads this registry.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, FrozenSet
+from typing import Any, Dict, FrozenSet
 
 
 # ==========================================================
@@ -20,32 +20,68 @@ from typing import Dict, FrozenSet
 
 @dataclass(frozen=True)
 class AgentRule:
-    """Configuration for a registered Agent."""
+    """
+    Configuration for a registered Agent.
+    """
 
-    # Basic Info
+    # ------------------------------------------------------
+    # Basic Information
+    # ------------------------------------------------------
+
     name: str
     description: str
 
+    # ------------------------------------------------------
     # Intent Detection
+    # ------------------------------------------------------
+
     keyword_weights: Dict[str, int]
 
-    # What this agent can do
+    # ------------------------------------------------------
+    # Agent Skills
+    # ------------------------------------------------------
+
     capabilities: FrozenSet[str]
 
+    # What actions this Agent can perform
+    supported_actions: FrozenSet[str] = frozenset()
+
+    # ------------------------------------------------------
     # Scheduling
+    # ------------------------------------------------------
+
     priority: int = 1
     requires_llm: bool = False
     enabled: bool = True
     max_tasks: int = 3
 
+    # ------------------------------------------------------
+    # Runtime (Future)
+    # ------------------------------------------------------
+
+    # Actual Agent instance
+    # Example:
+    # ChatAgent()
+    # DataAgent()
+    handler: Any | None = None
+
+    # ------------------------------------------------------
     # Versioning
+    # ------------------------------------------------------
+
     version: str = "1.0"
 
-    # Agent dependencies
+    # ------------------------------------------------------
+    # Agent Dependencies
+    # ------------------------------------------------------
+
     dependencies: FrozenSet[str] = frozenset()
 
-    # Future expansion
-    metadata: dict = field(default_factory=dict)
+    # ------------------------------------------------------
+    # Future Expansion
+    # ------------------------------------------------------
+
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
 
 # ==========================================================
@@ -65,7 +101,7 @@ SYSTEM = "system"
 
 CHAT_AGENT = AgentRule(
     name=CHAT,
-    description="General conversation and Q&A.",
+    description="General conversation and question answering.",
 
     keyword_weights={},
 
@@ -75,6 +111,14 @@ CHAT_AGENT = AgentRule(
         "summarization",
         "translation",
         "explanation",
+    }),
+
+    supported_actions=frozenset({
+        "chat",
+        "answer",
+        "explain",
+        "summarize",
+        "translate",
     }),
 
     priority=1,
@@ -125,6 +169,15 @@ DATA_AGENT = AgentRule(
         "data_validation",
     }),
 
+    supported_actions=frozenset({
+        "clean",
+        "analyze",
+        "visualize",
+        "dashboard",
+        "query",
+        "report",
+    }),
+
     priority=5,
     requires_llm=False,
     max_tasks=5,
@@ -168,6 +221,13 @@ PRESENTATION_AGENT = AgentRule(
         "storytelling",
         "executive_summary",
         "presentation",
+    }),
+
+    supported_actions=frozenset({
+        "dashboard",
+        "visualize",
+        "design",
+        "present",
     }),
 
     priority=4,
@@ -225,6 +285,14 @@ DEVELOPER_AGENT = AgentRule(
         "database_design",
     }),
 
+    supported_actions=frozenset({
+        "generate",
+        "debug",
+        "review",
+        "refactor",
+        "build",
+    }),
+
     priority=4,
     requires_llm=True,
     max_tasks=4,
@@ -276,6 +344,15 @@ SYSTEM_AGENT = AgentRule(
         "clipboard",
         "screenshots",
         "downloads",
+    }),
+
+    supported_actions=frozenset({
+        "open",
+        "close",
+        "install",
+        "delete",
+        "rename",
+        "move",
     }),
 
     priority=3,
