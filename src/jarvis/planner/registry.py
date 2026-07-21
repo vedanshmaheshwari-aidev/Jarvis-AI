@@ -63,7 +63,7 @@ class AgentRule:
     # Example:
     # ChatAgent()
     # DataAgent()
-    handler: Any | None = None
+    # handler: Any | None = None
 
     # ------------------------------------------------------
     # Versioning
@@ -90,7 +90,7 @@ class AgentRule:
 
 CHAT = "chat"
 DATA = "data"
-PRESENTATION = "presentation"
+FRONTEND = "frontend"
 DEVELOPER = "developer"
 SYSTEM = "system"
 
@@ -188,9 +188,9 @@ DATA_AGENT = AgentRule(
 # Presentation Agent
 # ==========================================================
 
-PRESENTATION_AGENT = AgentRule(
-    name=PRESENTATION,
-    description="Dashboards, charts and storytelling.",
+FRONTEND_AGENT = AgentRule(
+    name=FRONTEND,
+    description="Frontend Visualization Specialist.",
 
     keyword_weights={
         "dashboard": 12,
@@ -367,7 +367,7 @@ SYSTEM_AGENT = AgentRule(
 
 REGISTERED_AGENTS = (
     DATA_AGENT,
-    PRESENTATION_AGENT,
+    FRONTEND_AGENT,
     DEVELOPER_AGENT,
     SYSTEM_AGENT,
 )

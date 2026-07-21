@@ -2,12 +2,11 @@
 executor.py
 -----------
 
-Executes Tasks produced by the Planner
+Executes an ordered list of Planner Tasks.
 
-The Executor does not know How an Agent works.
-
-It simply dispatches each task to the 
-registered Agent handler.
+The Executor is responsible only for dispatching
+Tasks to the appropriate Agent handler and
+collecting TaskResults.
 """
 
 from jarvis.planner.task import Task
@@ -16,13 +15,19 @@ from jarvis.planner.task_result import TaskResult
 
 class TaskExecutor:
     """
-    Executes Planner Tasks.
+    Executes an ordered list of Planner Tasks.
+
+    The Executor dispatches each Task to the
+    appropriate Agent handler and collects
+    TaskResults.
     """
 
     def execute(self, tasks: list[Task]) -> list[TaskResult]:
-        """Execute Tasks in order.
-        
-        Returns a list of TaskResults.
+        """
+        Execute Tasks in order.
+
+        Returns:
+            list[TaskResult]: Results produced by the executed tasks.
         """
 
         results: list[TaskResult] = []
@@ -31,25 +36,43 @@ class TaskExecutor:
 
             handler = task.agent.handler
 
+            # -------------------------------------------------
+            # No handler registered
+            # -------------------------------------------------
+
             if handler is None:
                 results.append(
                     TaskResult(
                         task_id=task.id,
-                        success= False,
-                        error= f"No handler registered for '{task.agent.name}'.",
+                        agent_name=task.agent.name,
+                        success=False,
+                        error=f"No handler registered for '{task.agent.name}'.",
                     )
                 )
                 continue
 
-            result = handler.execute(task)
+            # -------------------------------------------------
+            # Execute Task
+            # -------------------------------------------------
+
+            try:
+                result = handler.execute(task)
+
+            except Exception as exc:
+                result = TaskResult(
+                    task_id=task.id,
+                    agent_name=task.agent.name,
+                    success=False,
+                    error=str(exc),
+                )
 
             results.append(result)
-
 
         return results
 
 
+# ---------------------------------------------------------
+# Singleton
+# ---------------------------------------------------------
 
-
-#Singleton
-executor = TaskExecutor()        
+executor = TaskExecutor()
