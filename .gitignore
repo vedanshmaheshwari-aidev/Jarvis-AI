@@ -9,11 +9,19 @@ __pycache__/
 # Environment Variables
 .env
 
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
 # Logs
 *.log
 
-# VS Code
+
+# IDE
 .vscode/
+.idea/
 
 # OS
 Thumbs.db

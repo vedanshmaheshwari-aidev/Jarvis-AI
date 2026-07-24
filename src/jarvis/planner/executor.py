@@ -9,6 +9,7 @@ Tasks to the appropriate Agent handler and
 collecting TaskResults.
 """
 
+from jarvis.agents.factory import agent_factory
 from jarvis.planner.task import Task
 from jarvis.planner.task_result import TaskResult
 
@@ -34,7 +35,10 @@ class TaskExecutor:
 
         for task in tasks:
 
-            handler = task.agent.handler
+            # -------------------------------------------------
+            # Get Agent from Factory
+            # -------------------------------------------------
+            handler = agent_factory.get(task.agent.name)
 
             # -------------------------------------------------
             # No handler registered
@@ -51,21 +55,8 @@ class TaskExecutor:
                 )
                 continue
 
-            # -------------------------------------------------
-            # Execute Task
-            # -------------------------------------------------
 
-            try:
-                result = handler.execute(task)
-
-            except Exception as exc:
-                result = TaskResult(
-                    task_id=task.id,
-                    agent_name=task.agent.name,
-                    success=False,
-                    error=str(exc),
-                )
-
+            result = handler.execute(task)
             results.append(result)
 
         return results

@@ -1,11 +1,10 @@
 import os
 import time
 
-
 from jarvis.banner import show_banner
 from jarvis.brain import brain
 from jarvis.memory import memory
-from jarvis.ollama_client import ollama_client
+
 
 def clear_screen():
     os.system("cls" if os.name == "nt" else "clear")
@@ -22,7 +21,7 @@ def main():
             continue
 
         if question.lower() in ["exit", "quit"]:
-            print("\n 👋 Goodbye")
+            print("\n👋 Goodbye")
             break
 
         if question.lower() == "clear":
@@ -31,32 +30,25 @@ def main():
             show_banner()
             continue
 
-
         start = time.perf_counter()
 
-        model = brain.choose_model(question)
+        print("\n⚡ Planning...\n")
 
-        model_name =  "⚡ Fast Model" if model == "qwen2.5:3b" else "🧠 Reasoning Model"
+        results = brain.think(question)
 
-        print(f"\n {model_name} ({model})")
+        # print("Jarvis > ", end="", flush=True)
 
-        # answer = ollama_client.chat(model,question)
+        for result in results:
 
-
-        print("\n⚡ Generating...\n")
-        print("Jarvis > ", end="", flush=True)
-
-        memory.add_user(question)
-
-        answer = ollama_client.chat(model)
-
-        memory.add_assistant(answer)
+            if result.success:
+                print(f"Jarvis > {result.data}")
+            else:
+                print(f"Jarvis [{result.agent_name}] > {result.error}")
 
         end = time.perf_counter()
 
-        print(f"\n ⏱️ Response time: {end - start:.2f} seconds\n")
+        print(f"\n⏱️ Response time: {end - start:.2f} seconds\n")
 
 
 if __name__ == "__main__":
     main()
-

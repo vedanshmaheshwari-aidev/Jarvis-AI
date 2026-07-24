@@ -22,22 +22,31 @@ class Planner:
         """
         Build an execution plan for a user request.
         """
+     # -----------------------------------------------------
+        # Detect which Agents should handle the request
+        # -----------------------------------------------------
 
         agents = intent.detect(question)
 
         tasks: list[Task] = []
+        # -----------------------------------------------------
+        # Create Tasks
+        # -----------------------------------------------------
 
         for agent in agents:
-
-            task = Task(
+            tasks.append(
+                Task(
                 agent=agent,
                 action=question,
                 priority=agent.priority,
                 requires_llm=agent.requires_llm,
             )
+        )
 
-            tasks.append(task)
- 
+         # -----------------------------------------------------
+        # Schedule Tasks
+        # -----------------------------------------------------
+
         return scheduler.schedule(tasks)
 
 

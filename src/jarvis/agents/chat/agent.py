@@ -10,8 +10,8 @@ with the configured LLM.
 
 from jarvis.agents.base import BaseAgent
 from jarvis.ollama_client import ollama_client
+from jarvis.planner.registry import CHAT
 from jarvis.planner.task import Task
-from jarvis.planner.task_result import TaskResult
 
 
 class ChatAgent(BaseAgent):
@@ -19,24 +19,31 @@ class ChatAgent(BaseAgent):
     general conversation Agent.
     """
     def __init__(self,):
-        super().__init__("chat")
+        super().__init__(CHAT)
 
+     # ======================================================
+    # Validation
+    # ======================================================
+    def _validate(self, task: Task) -> None:
+        """
+        Ensure the task contains a prompt.
+        """
+        if not task.action.strip():
+            raise ValueError("Task action connot be empty.")
     
     # ---------------------------------------------------------
     # Agent Logic
     # ---------------------------------------------------------
 
-    def _run(self, task: Task) -> TaskResult:
+    def _run(self, task: Task) -> str:
 
         """
-        Execute a chat Task.
+        Execute a chat Task by sending the user's
+        request to the configured LLM.
         """
-        response = ollama_client.chat(task.action)
-
-
-        return TaskResult(
-            task_id= task.id,
-            agent_name= self.name,
-            success= True,
-            message= response,
-        )    
+        model = task.payload["model"]
+        
+        return ollama_client.chat(
+            model=model,
+            prompt=task.action,
+        )
