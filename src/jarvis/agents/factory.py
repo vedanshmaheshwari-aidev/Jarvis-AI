@@ -9,7 +9,11 @@ Actual Agent objects are created here.
 """
 
 from jarvis.agents.chat import ChatAgent
-from jarvis.planner.registry import CHAT
+from jarvis.agents.data import DataAgent
+from jarvis.planner.registry import (
+    CHAT,
+    DATA,
+)
 
 
 class AgentFactory:
@@ -22,7 +26,7 @@ class AgentFactory:
 
         # Register built-in Agents
         self.register(CHAT, ChatAgent())
-
+        self.register(DATA, DataAgent())
     # ======================================================
     # Registration
     # ======================================================
