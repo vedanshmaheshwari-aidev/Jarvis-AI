@@ -9,7 +9,7 @@ from pathlib import Path
 
 class FileResolver:
     """
-    Reolve file paths.
+    Resolve file paths.
     """
 
     def resolve(self, path: str | Path) -> Path:
@@ -32,4 +32,4 @@ class FileResolver:
 # Singleton
 # ======================================================
 
-file_reolver = FileResolver()
+file_resolver = FileResolver()

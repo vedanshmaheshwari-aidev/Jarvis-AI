@@ -21,6 +21,28 @@ class DataReader:
     """
     reads datasets from disk
     """
+
+    # ======================================================
+    # Public API
+    # ======================================================
+
+    def read(self, path: str | Path) -> pd.DataFrame:
+        """
+        Automatically read a supported dataset.
+        """
+        path = Path(path)
+
+        suffix = path.suffix.lower()
+
+        if suffix == ".csv":
+            return self.read_csv(path)
+
+        if suffix in (".xlsx", "xls"):
+            return self.read_excel(path)
+
+        raise ValueError(f"Unsupported file format: {suffix}")
+
+
     # ======================================================
     # CSV
     # ======================================================
