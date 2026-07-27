@@ -9,6 +9,8 @@ import pandas as pd
 
 from jarvis.agents.data.analyzers.basic import basic_analyzer
 from jarvis.agents.data.analyzers.quality import quality_analyzer
+from jarvis.agents.data.analyzers.numeric import numeric_analyzer
+from jarvis.agents.data.analyzers.correlation import correlation_analyzer
 
 
 class DataAnalyzer:
@@ -28,6 +30,12 @@ class DataAnalyzer:
             quality_analyzer.analyze(df)
         )
 
+        report.extend(
+            numeric_analyzer.analyze(df)
+        )
+        report.extend(
+            correlation_analyzer.analyze(df)
+        )
         return "\n".join(report)
 
 
