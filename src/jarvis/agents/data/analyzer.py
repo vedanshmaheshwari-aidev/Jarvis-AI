@@ -11,7 +11,7 @@ from jarvis.agents.data.analyzers.basic import basic_analyzer
 from jarvis.agents.data.analyzers.quality import quality_analyzer
 from jarvis.agents.data.analyzers.numeric import numeric_analyzer
 from jarvis.agents.data.analyzers.correlation import correlation_analyzer
-
+from jarvis.agents.data.analyzers.outlier import outlier_analyzer
 
 class DataAnalyzer:
     """
@@ -33,9 +33,15 @@ class DataAnalyzer:
         report.extend(
             numeric_analyzer.analyze(df)
         )
+
         report.extend(
             correlation_analyzer.analyze(df)
         )
+
+        report.extend(
+            outlier_analyzer.analyze(df)
+        )
+        
         return "\n".join(report)
 
 
