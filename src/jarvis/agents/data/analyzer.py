@@ -12,7 +12,7 @@ from jarvis.agents.data.analyzers.quality import quality_analyzer
 from jarvis.agents.data.analyzers.numeric import numeric_analyzer
 from jarvis.agents.data.analyzers.correlation import correlation_analyzer
 from jarvis.agents.data.analyzers.outlier import outlier_analyzer
-
+from jarvis.agents.data.analyzers.categorical import categorical_analyzer
 class DataAnalyzer:
     """
     Coordinates multiple analyzers.
@@ -40,6 +40,10 @@ class DataAnalyzer:
 
         report.extend(
             outlier_analyzer.analyze(df)
+        )
+
+        report.extend(
+            categorical_analyzer.analyze(df)
         )
         
         return "\n".join(report)
