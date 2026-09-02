@@ -136,6 +136,10 @@ DATA_AGENT = AgentRule(
     description="Professional Data Analyst.",
 
     keyword_weights={
+        # ------------------------------------------------------
+        # Data / File Identification
+        # ------------------------------------------------------
+
         "csv": 12,
         "excel": 12,
         "spreadsheet": 10,
@@ -143,9 +147,75 @@ DATA_AGENT = AgentRule(
         "database": 10,
         "data": 8,
         "dataset": 8,
+
+        # ------------------------------------------------------
+        # General Analysis
+        # ------------------------------------------------------
+
         "analytics": 8,
         "analysis": 8,
+        "analyze": 8,
+        "analyse": 8,
         "statistics": 8,
+        "statistic": 8,
+        "eda": 10,
+
+        # ------------------------------------------------------
+        # Numeric Analysis
+        # ------------------------------------------------------
+
+        "average": 8,
+        "mean": 8,
+        "median": 8,
+        "minimum": 7,
+        "maximum": 7,
+        "variance": 7,
+        "standard deviation": 7,
+        "std": 6,
+        "sum": 6,
+
+        # ------------------------------------------------------
+        # Outlier Analysis
+        # ------------------------------------------------------
+
+        "outlier": 12,
+        "outliers": 12,
+        "anomalies": 10,
+        "unusual values": 10,
+
+        # ------------------------------------------------------
+        # Correlation Analysis
+        # ------------------------------------------------------
+
+        "correlation": 12,
+        "correlations": 12,
+        "relationship": 10,
+        "relationships": 10,
+
+        # ------------------------------------------------------
+        # Categorical Analysis
+        # ------------------------------------------------------
+
+        "categorical": 10,
+        "category": 8,
+        "categories": 8,
+        "department": 10,
+        "departments": 10,
+        "distribution": 8,
+
+        # ------------------------------------------------------
+        # Data Quality
+        # ------------------------------------------------------
+
+        "quality": 8,
+        "missing values": 10,
+        "duplicates": 10,
+        "duplicate": 8,
+
+        # ------------------------------------------------------
+        # Data Processing
+        # ------------------------------------------------------
+
         "pandas": 10,
         "numpy": 10,
         "clean": 7,
@@ -155,6 +225,11 @@ DATA_AGENT = AgentRule(
         "filter": 5,
         "sort": 5,
         "groupby": 6,
+
+        # ------------------------------------------------------
+        # Reporting
+        # ------------------------------------------------------
+
         "report": 4,
     },
 
