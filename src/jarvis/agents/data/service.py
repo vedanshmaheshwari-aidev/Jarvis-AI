@@ -10,14 +10,15 @@ operations such as:
     • locating files
     • reading datasets
     • analyzing data
+    • maintaining dataset context
     • cleaning data (future)
     • visualizations (future)
 
 The Agent itself remains lightweight.
 """
 
-from pathlib import Path
 import re
+from pathlib import Path
 
 from jarvis.agents.data.analyzer import data_analyzer
 from jarvis.agents.data.reader import data_reader
@@ -30,6 +31,11 @@ class DataService:
     Service layer for the Data Agent.
     """
 
+    def __init__(self):
+        # Currently loaded dataset
+        self.current_path: Path | None = None
+        self.current_df = None
+
     # ======================================================
     # Public API
     # ======================================================
@@ -41,32 +47,61 @@ class DataService:
 
         file_path = self._extract_file_path(task.action)
 
-        if file_path is None:
-            return (
-                "I couldn't find a CSV or Excel file in your request.\n\n"
-                "Example:\n"
-                "Analyze D:\\Data\\sales.csv"
+        # --------------------------------------------------
+        # Case 1: A new file was provided
+        # --------------------------------------------------
+
+        if file_path is not None:
+
+            path = file_resolver.resolve(file_path)
+
+            # Read dataset
+            df = data_reader.read(path)
+
+            # Store dataset context
+            self.current_path = path
+            self.current_df = df
+
+            # Analyze dataset
+            return data_analyzer.analyze(df)
+
+        # --------------------------------------------------
+        # Case 2: No file provided, but dataset exists
+        # --------------------------------------------------
+
+        if self.current_df is not None:
+
+            return data_analyzer.analyze(
+                self.current_df
             )
 
-        # Resolve the path
-        path = file_resolver.resolve(file_path)
+        # --------------------------------------------------
+        # Case 3: No file and no dataset context
+        # --------------------------------------------------
 
-        # Read dataset
-        df = data_reader.read(path)
-
-        # Analyze dataset
-        return data_analyzer.analyze(df)
+        return (
+            "I don't have a dataset loaded yet.\n\n"
+            "Please provide a CSV or Excel file.\n\n"
+            "Example:\n"
+            "Analyze D:\\Data\\sales.csv"
+        )
 
     # ======================================================
     # Helpers
     # ======================================================
 
-    def _extract_file_path(self, text: str) -> str | None:
+    def _extract_file_path(
+        self,
+        text: str
+    ) -> str | None:
         """
-        Extract a CSV or Excel path from the user's request.
+        Extract a CSV or Excel path
+        from the user's request.
         """
 
-        pattern = r'([A-Za-z]:\\[^"\']+\.(?:csv|xlsx|xls))'
+        pattern = (
+            r'([A-Za-z]:\\[^"\']+\.(?:csv|xlsx|xls))'
+        )
 
         match = re.search(pattern, text)
 
