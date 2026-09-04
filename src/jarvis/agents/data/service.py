@@ -24,6 +24,7 @@ from jarvis.agents.data.analyzer import data_analyzer
 from jarvis.agents.data.reader import data_reader
 from jarvis.agents.data.request_router import data_request_router
 
+from jarvis.agents.data.analyzers.query import query_analyzer
 from jarvis.agents.data.analyzers.numeric import numeric_analyzer
 from jarvis.agents.data.analyzers.outlier import outlier_analyzer
 from jarvis.agents.data.analyzers.categorical import categorical_analyzer
@@ -105,6 +106,15 @@ class DataService:
 
         if request_type == "full":
             return data_analyzer.analyze(df)
+
+
+        if request_type == "query":
+            return "\n" .join(
+                query_analyzer.analyze(
+                    df,
+                    task.action
+                )
+            )
 
         if request_type == "numeric":
             return "\n".join(
