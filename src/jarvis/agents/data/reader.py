@@ -37,7 +37,7 @@ class DataReader:
         if suffix == ".csv":
             return self.read_csv(path)
 
-        if suffix in (".xlsx", "xls"):
+        if suffix in (".xlsx", ".xls"):
             return self.read_excel(path)
 
         raise ValueError(f"Unsupported file format: {suffix}")
