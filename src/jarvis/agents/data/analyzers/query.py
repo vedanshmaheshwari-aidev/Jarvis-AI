@@ -203,7 +203,10 @@ class QueryAnalyzer:
     # Employee Count
     # ======================================================
 
-    def _is_employee_count_request(self, request: str) -> bool:
+    def _is_employee_count_request(
+        self,
+        request: str,
+    ) -> bool:
 
         return any(
             phrase in request
@@ -215,7 +218,10 @@ class QueryAnalyzer:
             ]
         )
 
-    def _count_rows(self, df: pd.DataFrame) -> list[str]:
+    def _count_rows(
+        self,
+        df: pd.DataFrame,
+    ) -> list[str]:
 
         return [
             "📊 Query Result",
@@ -228,7 +234,10 @@ class QueryAnalyzer:
     # Unique Category Count
     # ======================================================
 
-    def _is_unique_count_request(self, request: str) -> bool:
+    def _is_unique_count_request(
+        self,
+        request: str,
+    ) -> bool:
 
         return any(
             phrase in request
@@ -261,7 +270,10 @@ class QueryAnalyzer:
     # Filtering
     # ======================================================
 
-    def _is_filter_request(self, request: str) -> bool:
+    def _is_filter_request(
+        self,
+        request: str,
+    ) -> bool:
 
         keywords = [
             "above",
@@ -315,6 +327,10 @@ class QueryAnalyzer:
 
         value = float(number_match.group())
 
+        # --------------------------------------------------
+        # Greater Than
+        # --------------------------------------------------
+
         if (
             "above" in request
             or "greater than" in request
@@ -325,6 +341,10 @@ class QueryAnalyzer:
             result = df[df[column] > value]
             operator = ">"
 
+        # --------------------------------------------------
+        # Less Than
+        # --------------------------------------------------
+
         elif (
             "below" in request
             or "less than" in request
@@ -333,6 +353,10 @@ class QueryAnalyzer:
 
             result = df[df[column] < value]
             operator = "<"
+
+        # --------------------------------------------------
+        # Equal To
+        # --------------------------------------------------
 
         elif "equal to" in request:
 
@@ -355,7 +379,10 @@ class QueryAnalyzer:
     # Ranking
     # ======================================================
 
-    def _is_ranking_request(self, request: str) -> bool:
+    def _is_ranking_request(
+        self,
+        request: str,
+    ) -> bool:
 
         return any(
             keyword in request
@@ -407,10 +434,13 @@ class QueryAnalyzer:
                 "❌ Ranking count must be greater than zero."
             ]
 
-        count = min(count, len(df))
+        count = min(
+            count,
+            len(df),
+        )
 
         # --------------------------------------------------
-        # Highest / Top
+        # Lowest / Bottom
         # --------------------------------------------------
 
         if (
@@ -419,7 +449,10 @@ class QueryAnalyzer:
         ):
 
             result = (
-                df.nsmallest(count, column)
+                df.nsmallest(
+                    count,
+                    column,
+                )
                 .sort_values(
                     by=column,
                     ascending=True,
@@ -428,10 +461,17 @@ class QueryAnalyzer:
 
             title = f"Bottom {count} {column}"
 
+        # --------------------------------------------------
+        # Highest / Top
+        # --------------------------------------------------
+
         else:
 
             result = (
-                df.nlargest(count, column)
+                df.nlargest(
+                    count,
+                    column,
+                )
                 .sort_values(
                     by=column,
                     ascending=False,
@@ -522,7 +562,10 @@ class QueryAnalyzer:
             ]
         )
 
-        return has_average and has_grouping
+        return (
+            has_average
+            and has_grouping
+        )
 
     def _grouped_average(
         self,
@@ -553,7 +596,9 @@ class QueryAnalyzer:
             ]
 
         grouped = (
-            df.groupby(group_column)[numeric_column]
+            df.groupby(
+                group_column
+            )[numeric_column]
             .mean()
             .sort_values(
                 ascending=False
@@ -670,6 +715,27 @@ class QueryAnalyzer:
         }
 
         # --------------------------------------------------
+        # IMPORTANT FIX:
+        # Use whole words instead of substring matching.
+        #
+        # Previously:
+        #
+        #     "age" in "average"
+        #
+        # returned True.
+        #
+        # Now "age" only matches when "age" is actually
+        # a separate word in the request.
+        # --------------------------------------------------
+
+        words = set(
+            re.findall(
+                r"\b[a-zA-Z_][a-zA-Z0-9_]*\b",
+                request.lower(),
+            )
+        )
+
+        # --------------------------------------------------
         # First pass:
         # Numeric columns when numeric data is expected
         # --------------------------------------------------
@@ -691,7 +757,7 @@ class QueryAnalyzer:
                 )
 
                 if any(
-                    alias in request
+                    alias in words
                     for alias in aliases
                 ):
                     return str(column)
@@ -711,7 +777,7 @@ class QueryAnalyzer:
             )
 
             if any(
-                alias in request
+                alias in words
                 for alias in aliases
             ):
                 return str(column)
@@ -777,6 +843,7 @@ class QueryAnalyzer:
                 "pay",
                 "income",
                 "wage",
+                "wages",
                 "earning",
                 "earnings",
             ]
@@ -784,7 +851,10 @@ class QueryAnalyzer:
 
             for candidate in numeric_columns:
 
-                if str(candidate).lower() == "salary":
+                if (
+                    str(candidate).lower()
+                    == "salary"
+                ):
                     return str(candidate)
 
         # --------------------------------------------------
@@ -832,6 +902,7 @@ class QueryAnalyzer:
             column_name = str(column).lower()
 
             if column_name == "department":
+
                 if (
                     "department" in request
                     or "departments" in request
@@ -839,6 +910,7 @@ class QueryAnalyzer:
                     return str(column)
 
             if column_name == "category":
+
                 if (
                     "category" in request
                     or "categories" in request
@@ -920,5 +992,9 @@ class QueryAnalyzer:
 
         return lines
 
+
+# ======================================================
+# Singleton
+# ======================================================
 
 query_analyzer = QueryAnalyzer()
