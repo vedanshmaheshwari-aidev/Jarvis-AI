@@ -1,92 +1,96 @@
 """
-chat_service.py
------------------
+chart_service.py
+----------------
 
-Generates charts from pandas DataFrames based on the user's natural-language request.
+Generates charts from pandas DataFrames
+based on the user's natural-language request.
 """
 
 from pathlib import Path
 
-import matplotlib.pyplot as plt  # pyright: ignore[reportMissingModuleSource]
+import matplotlib.pyplot as plt
 import pandas as pd
 
 from jarvis.agents.data.visualization.chart_detector import chart_detector
+from jarvis.agents.data.visualization.column_detector import column_detector
 
-class ChatService:
-    """
-    Handles chart generation for the Data Agents
-    """
 
+class ChartService:
     def __init__(self):
         self.output_dir = Path("assets/output")
-        self.output_dir.mkdir(parents=True, exist_ok=True,)
-
-
-    # ======================================================
-    # Public API
-    # ======================================================
+        self.output_dir.mkdir(parents=True, exist_ok=True)
 
     def create_chart(self, df: pd.DataFrame, request: str) -> str:
         """
-        Create a chart from the DataFrame.
-        
-        Returns:
-            str: Path to the generated chart.
-            """    
+        Create a chart based on the user's request.
+        """
 
         chart_type = chart_detector.detect(request)
 
         if chart_type == "unknown":
-            return ("❌ I couldn't determine which chart "
+            return (
+                "❌ I couldn't determine which chart "
                 "you want.\n\n"
                 "Try:\n"
                 "• Show a bar chart of salary\n"
                 "• Show salary distribution\n"
                 "• Show a scatter plot of age vs salary\n"
                 "• Show a line chart of sales over time\n"
-                "• Show a pie chart of departments")
+                "• Show a pie chart of departments"
+            )
 
         if df.empty:
             return "❌ The dataset is empty."
 
-
-        # --------------------------------------------------
-        # Create chart
-        # --------------------------------------------------
+        columns = column_detector.detect(df, request)
 
         if chart_type == "bar":
-            return self._create_bar_chart(df)
+            return self._create_bar_chart(df, columns)
 
         if chart_type == "histogram":
-            return self._create_histogram_chart(df)
-    
+            return self._create_histogram(df, columns)
+
         if chart_type == "scatter":
-            return self._create_scatter_chart(df)
+            return self._create_scatter_chart(df, columns)
 
         if chart_type == "line":
-            return self._create_line_chart(df)
+            return self._create_line_chart(df, columns)
 
         if chart_type == "pie":
-            return self._create_pie_chart(df)
+            return self._create_pie_chart(df, columns)
 
         return f"❌ Unsupported chart type: {chart_type}"
 
-    # ======================================================
-    # Bar Chart
-    # ======================================================
-    
-    def _create_bar_chart(self, df: pd.DataFrame) -> str:
+    def _create_bar_chart(
+        self,
+        df: pd.DataFrame,
+        columns: list[str],
+    ) -> str:
+        """
+        Create a bar chart using the detected column.
+        """
 
-        numeric_columns = df.select_dtypes(include="number").columns
+        if columns:
+            column = columns[0]
+        else:
+            numeric_columns = df.select_dtypes(
+                include="number"
+            ).columns
 
-        if len(numeric_columns) ==0:
-            return "❌ No numeric columns available for a bar chart."
+            if len(numeric_columns) == 0:
+                return (
+                    "❌ No numeric columns available "
+                    "for a bar chart."
+                )
 
-        column = numeric_columns[0]
+            column = numeric_columns[0]
 
-        plt.figure(figsize =(8,5))
+        plt.figure(figsize=(8, 5))
 
-        plt.bar(range(len(df[column])) , df[column])
+        plt.bar(
+            range(len(df[column])),
+            df[column],
+        )
 
         plt.xlabel("Records")
         plt.ylabel(column)
@@ -94,50 +98,89 @@ class ChatService:
 
         return self._save_chart(f"bar_{column}")
 
-    # ======================================================
-    # Histogram
-    # ======================================================
+    def _create_histogram(
+        self,
+        df: pd.DataFrame,
+        columns: list[str],
+    ) -> str:
+        """
+        Create a histogram using the detected numeric column.
+        """
 
-    def _create_histogram_chart(self, df: pd.DataFrame) -> str:
+        if columns:
+            column = columns[0]
 
-        numeric_columns = df.select_dtypes(include="number").columns
+            if not pd.api.types.is_numeric_dtype(
+                df[column]
+            ):
+                return (
+                    f"❌ '{column}' is not a numeric "
+                    "column suitable for a histogram."
+                )
 
-        if len(numeric_columns) == 0:
-            return "❌ No numeric columns available for a histogram."
+        else:
+            numeric_columns = df.select_dtypes(
+                include="number"
+            ).columns
 
-        column = numeric_columns[0]
+            if len(numeric_columns) == 0:
+                return (
+                    "❌ No numeric columns available "
+                    "for a histogram."
+                )
 
-        plt.figure(figsize =(8,5))
-        # plt.hist(df[column], bins=30)
-        # plt.xlabel(column)
-        # plt.ylabel("Frequency")
-        # plt.title(f"{column} - Histogram")
+            column = numeric_columns[0]
 
-        # return self._save_chart(f"histogram_{column}")
+        plt.figure(figsize=(8, 5))
+
+        plt.hist(
+            df[column].dropna(),
+            bins=10,
+        )
+
+        plt.xlabel(column)
         plt.ylabel("Frequency")
         plt.title(f"{column} - Distribution")
 
-        return self._save_chart(
-            f"histogram_{column}")
+        return self._save_chart(f"histogram_{column}")
 
-    # ======================================================
-    # Scatter Chart
-    # ======================================================
+    def _create_scatter_chart(
+        self,
+        df: pd.DataFrame,
+        columns: list[str],
+    ) -> str:
+        """
+        Create a scatter plot using two detected
+        numeric columns.
+        """
 
-    def _create_scatter_chart(self, df: pd.DataFrame) -> str:
+        if len(columns) >= 2:
+            x_column = columns[0]
+            y_column = columns[1]
 
-        numeric_columns = df.select_dtypes(
-            include="number"
-        ).columns
+        else:
+            numeric_columns = df.select_dtypes(
+                include="number"
+            ).columns
 
-        if len(numeric_columns) < 2:
+            if len(numeric_columns) < 2:
+                return (
+                    "❌ A scatter plot requires "
+                    "at least two numeric columns."
+                )
+
+            x_column = numeric_columns[0]
+            y_column = numeric_columns[1]
+
+        if not pd.api.types.is_numeric_dtype(
+            df[x_column]
+        ) or not pd.api.types.is_numeric_dtype(
+            df[y_column]
+        ):
             return (
-                "❌ A scatter plot requires at least "
-                "two numeric columns."
+                "❌ Scatter plots require "
+                "numeric columns."
             )
-
-        x_column = numeric_columns[0]
-        y_column = numeric_columns[1]
 
         plt.figure(figsize=(8, 5))
 
@@ -156,23 +199,39 @@ class ChatService:
             f"scatter_{x_column}_vs_{y_column}"
         )
 
-    # ======================================================
-    # Line Chart
-    # ======================================================
-
     def _create_line_chart(
         self,
         df: pd.DataFrame,
+        columns: list[str],
     ) -> str:
+        """
+        Create a line chart using the detected
+        numeric column.
+        """
 
-        numeric_columns = df.select_dtypes(
-            include="number"
-        ).columns
+        if columns:
+            column = columns[0]
 
-        if len(numeric_columns) == 0:
-            return "❌ No numeric columns available for a line chart."
+            if not pd.api.types.is_numeric_dtype(
+                df[column]
+            ):
+                return (
+                    f"❌ '{column}' is not a numeric "
+                    "column suitable for a line chart."
+                )
 
-        column = numeric_columns[0]
+        else:
+            numeric_columns = df.select_dtypes(
+                include="number"
+            ).columns
+
+            if len(numeric_columns) == 0:
+                return (
+                    "❌ No numeric columns available "
+                    "for a line chart."
+                )
+
+            column = numeric_columns[0]
 
         plt.figure(figsize=(8, 5))
 
@@ -189,26 +248,46 @@ class ChatService:
             f"line_{column}"
         )
 
-    # ======================================================
-    # Pie Chart
-    # ======================================================
-
     def _create_pie_chart(
         self,
         df: pd.DataFrame,
+        columns: list[str],
     ) -> str:
+        """
+        Create a pie chart using the detected
+        categorical column.
+        """
 
-        categorical_columns = df.select_dtypes(
-            include=["object", "category", "string"]
-        ).columns
+        if columns:
+            column = columns[0]
 
-        if len(categorical_columns) == 0:
-            return (
-                "❌ No categorical columns available "
-                "for a pie chart."
-            )
+            if not (
+                pd.api.types.is_object_dtype(df[column])
+                or pd.api.types.is_categorical_dtype(df[column])
+                or pd.api.types.is_string_dtype(df[column])
+            ):
+                return (
+                    f"❌ '{column}' is not a "
+                    "categorical column suitable "
+                    "for a pie chart."
+                )
 
-        column = categorical_columns[0]
+        else:
+            categorical_columns = df.select_dtypes(
+                include=[
+                    "object",
+                    "category",
+                    "string",
+                ]
+            ).columns
+
+            if len(categorical_columns) == 0:
+                return (
+                    "❌ No categorical columns "
+                    "available for a pie chart."
+                )
+
+            column = categorical_columns[0]
 
         counts = df[column].value_counts()
 
@@ -228,14 +307,10 @@ class ChatService:
             f"pie_{column}"
         )
 
-    # ======================================================
-    # Save Chart
-    # ======================================================
-
-    def _save_chart(
-        self,
-        filename: str,
-    ) -> str:
+    def _save_chart(self, filename: str) -> str:
+        """
+        Save the generated chart as a PNG file.
+        """
 
         path = self.output_dir / f"{filename}.png"
 
@@ -249,8 +324,4 @@ class ChatService:
         )
 
 
-# ======================================================
-# Singleton
-# ======================================================
-
-chart_service = ChatService()
+chart_service = ChartService()
