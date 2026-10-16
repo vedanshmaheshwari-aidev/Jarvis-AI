@@ -31,6 +31,7 @@ from jarvis.agents.data.analyzers.categorical import categorical_analyzer
 from jarvis.agents.data.analyzers.correlation import correlation_analyzer
 from jarvis.agents.data.analyzers.quality import quality_analyzer
 
+from jarvis.planner import task
 from jarvis.planner.task import Task
 from jarvis.tools.file_resolver import file_resolver
 
@@ -96,9 +97,13 @@ class DataService:
         # Determine requested analysis
         # --------------------------------------------------
 
-        request_type = data_request_router.route(
-            task.action
-        )
+        # request_type = data_request_router.route(task.action)
+        
+        print(f"[DEBUG] Router module: {data_request_router.__class__.__module__}")
+        print(f"[DEBUG] Router file: {__import__('jarvis.agents.data.request_router', fromlist=['__file__']).__file__}")
+        print(f"[DEBUG] Data action: {task.action!r}")
+        request_type = data_request_router.route(task.action)
+        print(f"[DEBUG] Routed request type: {request_type!r}")
 
         # --------------------------------------------------
         # Route the request

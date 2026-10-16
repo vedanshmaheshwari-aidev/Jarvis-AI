@@ -6,6 +6,8 @@ Determines which type of data analysis
 the user is requesting.
 """
 
+import re
+
 
 class DataRequestRouter:
     """
@@ -14,7 +16,6 @@ class DataRequestRouter:
     """
 
     def route(self, text: str) -> str:
-
         text = text.lower().strip()
 
         # ----------------------------------------------
@@ -183,10 +184,13 @@ class DataRequestRouter:
                 "lowest salary",
                 "highest average",
                 "lowest average",
-                "top",
-                "bottom",
             ]
         ):
+            return True
+
+        # Match "top" and "bottom" as complete words.
+        # This prevents "Desktop" from triggering ranking.
+        if re.search(r"\b(top|bottom)\b", text):
             return True
 
         # ----------------------------------------------
