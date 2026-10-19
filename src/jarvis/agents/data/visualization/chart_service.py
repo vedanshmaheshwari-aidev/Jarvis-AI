@@ -10,6 +10,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import pandas as pd
+import re
 
 from jarvis.agents.data.visualization.chart_detector import chart_detector
 from jarvis.agents.data.visualization.column_detector import column_detector
@@ -44,6 +45,27 @@ class ChartService:
 
         columns = column_detector.detect(df, request)
 
+        # If the user explicitly names a column that was not
+        # detected, don't silently chart an unrelated column.
+        if not columns:
+            requested_field = re.search(
+                r"\b(?:of|by)\s+([a-zA-Z_][a-zA-Z0-9_]*)",
+                request,
+                re.IGNORECASE,
+            )
+
+            if requested_field:
+                field = requested_field.group(1)
+                available = ", ".join(
+                    str(column) for column in df.columns
+                )
+
+                return (
+                    f"❌ I couldn't find a column matching "
+                    f"'{field}'.\n\n"
+                    f"Available columns: {available}"
+                )
+                
         if chart_type == "bar":
             return self._create_bar_chart(df, columns)
 
@@ -54,7 +76,7 @@ class ChartService:
             return self._create_scatter_chart(df, columns)
 
         if chart_type == "line":
-            return self._create_line_chart(df, columns)
+            return self._create_line_chart(df, columns, request)
 
         if chart_type == "pie":
             return self._create_pie_chart(df, columns)
@@ -199,28 +221,25 @@ class ChartService:
             f"scatter_{x_column}_vs_{y_column}"
         )
 
+    
     def _create_line_chart(
         self,
         df: pd.DataFrame,
         columns: list[str],
+        request: str,
     ) -> str:
-        """
-        Create a line chart using the detected
-        numeric column.
-        """
+        """Create a line chart, using dates when available."""
 
-        if columns:
-            column = columns[0]
+        # Select the requested numeric column.
+        column = next(
+            (
+                col for col in columns
+                if pd.api.types.is_numeric_dtype(df[col])
+            ),
+            None,
+        )
 
-            if not pd.api.types.is_numeric_dtype(
-                df[column]
-            ):
-                return (
-                    f"❌ '{column}' is not a numeric "
-                    "column suitable for a line chart."
-                )
-
-        else:
+        if column is None:
             numeric_columns = df.select_dtypes(
                 include="number"
             ).columns
@@ -233,20 +252,72 @@ class ChartService:
 
             column = numeric_columns[0]
 
-        plt.figure(figsize=(8, 5))
-
-        plt.plot(
-            df[column],
-            marker="o",
+        # Look for a column that appears to contain dates.
+        date_column = next(
+            (
+                col for col in df.columns
+                if any(
+                    word in str(col).lower()
+                    for word in ("date", "time", "timestamp")
+                )
+            ),
+            None,
         )
 
+        plt.figure(figsize=(9, 5))
+
+        if date_column is not None:
+            try:
+                dates = pd.to_datetime(
+                    df[date_column],
+                    errors="coerce",
+                    dayfirst=True,
+                    format="mixed",
+                )
+            except (TypeError, ValueError):
+                dates = pd.to_datetime(
+                    df[date_column],
+                    errors="coerce",
+                    dayfirst=True,
+                )
+
+            valid = pd.DataFrame({
+                "date": dates,
+                "value": df[column],
+            }).dropna()
+
+            if len(valid) >= 2:
+                # Aggregate multiple records on the same date.
+                daily = (
+                    valid.groupby("date")["value"]
+                    .sum()
+                    .sort_index()
+                )
+
+                plt.plot(
+                    daily.index,
+                    daily.values,
+                    marker="o",
+                )
+
+                plt.xlabel(str(date_column))
+                plt.ylabel(f"Total {column}")
+                plt.title(f"{column} Over Time")
+                plt.xticks(rotation=45)
+
+                return self._save_chart(
+                    f"line_{column}_over_{date_column}"
+                )
+
+        # Fall back to record order when usable dates
+        # aren't available.
+        plt.plot(df[column], marker="o")
         plt.xlabel("Records")
         plt.ylabel(column)
         plt.title(f"{column} - Line Chart")
 
-        return self._save_chart(
-            f"line_{column}"
-        )
+        return self._save_chart(f"line_{column}")
+
 
     def _create_pie_chart(
         self,

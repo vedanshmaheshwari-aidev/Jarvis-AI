@@ -1,9 +1,10 @@
+
 """
 column_detector.py
 ------------------
 
-Detects which DataFrame columns the user is referring to
-in a natural-language request.
+Detects DataFrame columns mentioned in natural-language requests.
+Supports underscores, spaces, and basic semantic aliases.
 """
 
 import re
@@ -14,56 +15,81 @@ import pandas as pd
 class ColumnDetector:
     def detect(self, df: pd.DataFrame, request: str) -> list[str]:
         """
-        Detect columns mentioned in the user's request.
-
-        Returns:
-            A list of matching DataFrame column names.
+        Return matching DataFrame columns in the order they
+        appear in the user's request.
         """
-        request = request.lower().strip()
-
-        words = set(
-            re.findall(
-                r"\b[a-zA-Z_][a-zA-Z0-9_]*\b",
-                request,
-            )
-        )
-
+        normalized_request = self._normalize(request)
         matches = []
 
         for column in df.columns:
-            column_text = str(column).lower().strip()
+            column_name = str(column)
+            aliases = self._build_aliases(
+                self._normalize(column_name)
+            )
 
-            aliases = self._build_aliases(column_text)
+            earliest_position = None
+            longest_match = 0
 
-            if any(alias in words for alias in aliases):
-                matches.append(str(column))
+            for alias in aliases:
+                pattern = self._alias_pattern(alias)
+                match = re.search(pattern, normalized_request)
 
-        return matches
+                if match:
+                    position = match.start()
+
+                    if (
+                        earliest_position is None
+                        or position < earliest_position
+                    ):
+                        earliest_position = position
+                        longest_match = len(alias)
+                    elif position == earliest_position:
+                        longest_match = max(
+                            longest_match, len(alias)
+                        )
+
+            if earliest_position is not None:
+                matches.append(
+                    (earliest_position, -longest_match, column_name)
+                )
+
+        matches.sort(key=lambda item: (item[0], item[1]))
+
+        return [column for _, _, column in matches]
+
+    def _normalize(self, text: str) -> str:
+        """Normalize underscores, hyphens, and whitespace."""
+        text = text.lower().strip()
+        text = re.sub(r"[_\-]+", " ", text)
+        return re.sub(r"\s+", " ", text)
+
+    def _alias_pattern(self, alias: str) -> str:
+        """Match a complete alias, not a partial word."""
+        parts = alias.split()
+        alias_regex = r"\s+".join(
+            re.escape(part) for part in parts
+        )
+        return rf"(?<!\w){alias_regex}(?!\w)"
 
     def _build_aliases(self, column: str) -> set[str]:
-        """
-        Build simple semantic aliases for a column name.
-        """
+        """Build aliases for common column names."""
         aliases = {column}
 
         semantic_aliases = {
-            "salary": {"salary", "pay", "income", "wage", "earnings"},
+            "salary": {
+                "salary", "pay", "income", "wage", "earnings"
+            },
             "age": {"age", "ages"},
             "department": {
-                "department",
-                "departments",
-                "dept",
-                "division",
-                "category",
+                "department", "departments", "dept", "division"
             },
-            "name": {"name", "names", "employee", "employees", "person"},
+            "name": {
+                "name", "names", "employee", "employees", "person"
+            },
             "sales": {"sales", "sale", "revenue"},
         }
 
-        for key, values in semantic_aliases.items():
-            if column == key:
-                aliases.update(values)
-
+        aliases.update(semantic_aliases.get(column, set()))
         return aliases
 
 
