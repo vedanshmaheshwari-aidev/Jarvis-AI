@@ -274,6 +274,24 @@ DATA_AGENT = AgentRule(
         "groupby": 6,
 
         # --------------------------------------------------
+        # Visualization (currently handled by Data Agent)
+        # --------------------------------------------------
+
+        "chart": 12,
+        "bar chart": 14,
+        "histogram": 14,
+        "scatter plot": 14,
+        "line chart": 14,
+        "pie chart": 14,
+        "plot": 10,
+        "graph": 10,
+        "visualization": 12,
+        "visualisation": 12,
+        
+        
+        
+        
+        # --------------------------------------------------
         # Reporting
         # --------------------------------------------------
 
@@ -355,6 +373,7 @@ FRONTEND_AGENT = AgentRule(
     priority=4,
     requires_llm=True,
     max_tasks=3,
+    enabled=False,
 
     dependencies=frozenset({
         DATA,

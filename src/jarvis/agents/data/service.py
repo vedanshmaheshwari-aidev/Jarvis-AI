@@ -1,20 +1,12 @@
+
 """
 service.py
-----------
+-----------
 
 Business logic for the Data Agent.
 
-The DataService coordinates all data-related
-operations such as:
-
-    • locating files
-    • reading datasets
-    • analyzing data
-    • maintaining dataset context
-    • cleaning data (future)
-    • visualizations (future)
-
-The Agent itself remains lightweight.
+Coordinates dataset loading, analysis, and visualization
+while maintaining the currently loaded dataset.
 """
 
 import re
@@ -31,155 +23,100 @@ from jarvis.agents.data.analyzers.categorical import categorical_analyzer
 from jarvis.agents.data.analyzers.correlation import correlation_analyzer
 from jarvis.agents.data.analyzers.quality import quality_analyzer
 
-from jarvis.planner import task
+from jarvis.agents.data.visualization.chart_detector import chart_detector
+from jarvis.agents.data.visualization.chart_service import chart_service
+
 from jarvis.planner.task import Task
 from jarvis.tools.file_resolver import file_resolver
 
 
 class DataService:
-    """
-    Service layer for the Data Agent.
-    """
+    """Service layer for the Data Agent."""
 
     def __init__(self):
-        # Currently loaded dataset
         self.current_path: Path | None = None
         self.current_df = None
 
-    # ======================================================
-    # Public API
-    # ======================================================
-
     def execute(self, task: Task) -> str:
-        """
-        Execute a data-related task.
-        """
+        """Execute a data-related task."""
 
         file_path = self._extract_file_path(task.action)
 
-        # --------------------------------------------------
-        # Case 1: A new file was provided
-        # --------------------------------------------------
-
+        # Load a new dataset when a path is supplied.
         if file_path is not None:
-
             path = file_resolver.resolve(file_path)
-
-            # Read dataset
             df = data_reader.read(path)
 
-            # Store dataset context
             self.current_path = path
             self.current_df = df
 
-        # --------------------------------------------------
-        # Case 2: No file, use current dataset
-        # --------------------------------------------------
-
+        # Otherwise, reuse the previously loaded dataset.
         elif self.current_df is not None:
-
             df = self.current_df
 
-        # --------------------------------------------------
-        # Case 3: No file and no dataset
-        # --------------------------------------------------
-
         else:
-
             return (
                 "I don't have a dataset loaded yet.\n\n"
                 "Please provide a CSV or Excel file.\n\n"
                 "Example:\n"
-                "Analyze D:\\Data\\sales.csv"
+                r"Analyze D:\Data\sales.csv"
             )
 
         # --------------------------------------------------
-        # Determine requested analysis
+        # Route visualization requests first.
         # --------------------------------------------------
 
-        # request_type = data_request_router.route(task.action)
-        
-        print(f"[DEBUG] Router module: {data_request_router.__class__.__module__}")
-        print(f"[DEBUG] Router file: {__import__('jarvis.agents.data.request_router', fromlist=['__file__']).__file__}")
-        print(f"[DEBUG] Data action: {task.action!r}")
+        chart_type = chart_detector.detect(task.action)
+
+        if chart_type != "unknown":
+            return chart_service.create_chart(df, task.action)
+
+        # --------------------------------------------------
+        # Route regular data-analysis requests.
+        # --------------------------------------------------
+
         request_type = data_request_router.route(task.action)
-        print(f"[DEBUG] Routed request type: {request_type!r}")
-
-        # --------------------------------------------------
-        # Route the request
-        # --------------------------------------------------
 
         if request_type == "full":
             return data_analyzer.analyze(df)
 
-
         if request_type == "query":
-            return "\n" .join(
-                query_analyzer.analyze(
-                    df,
-                    task.action
-                )
+            return "\n".join(
+                query_analyzer.analyze(df, task.action)
             )
 
         if request_type == "numeric":
-            return "\n".join(
-                numeric_analyzer.analyze(df)
-            )
+            return "\n".join(numeric_analyzer.analyze(df))
 
         if request_type == "outlier":
-            return "\n".join(
-                outlier_analyzer.analyze(df)
-            )
+            return "\n".join(outlier_analyzer.analyze(df))
 
         if request_type == "categorical":
-            return "\n".join(
-                categorical_analyzer.analyze(df)
-            )
+            return "\n".join(categorical_analyzer.analyze(df))
 
         if request_type == "correlation":
-            return "\n".join(
-                correlation_analyzer.analyze(df)
-            )
+            return "\n".join(correlation_analyzer.analyze(df))
 
         if request_type == "quality":
-            return "\n".join(
-                quality_analyzer.analyze(df)
-            )
-
-        # --------------------------------------------------
-        # Unknown request
-        # --------------------------------------------------
+            return "\n".join(quality_analyzer.analyze(df))
 
         return (
-            "I understand that you're asking about "
-            "the dataset, but I couldn't determine "
-            "which analysis you want.\n\n"
+            "I understand that you're asking about the dataset, "
+            "but I couldn't determine which analysis you want.\n\n"
             "Try:\n"
             "• Show salary statistics\n"
             "• Find outliers\n"
             "• Show correlations\n"
             "• Analyze departments\n"
             "• Check data quality\n"
-            "• Perform full analysis"
+            "• Perform full analysis\n"
+            "• Show a bar chart of salary"
         )
 
-    # ======================================================
-    # Helpers
-    # ======================================================
+    def _extract_file_path(self, text: str) -> str | None:
+        """Extract a CSV or Excel file path from a request."""
 
-    def _extract_file_path(
-        self,
-        text: str
-    ) -> str | None:
-        """
-        Extract a CSV or Excel path
-        from the user's request.
-        """
-
-        pattern = (
-            r'([A-Za-z]:\\[^"\']+\.(?:csv|xlsx|xls))'
-        )
-
+        pattern = r'([A-Za-z]:\\[^"\r\n]+?\.(?:csv|xlsx|xls))'
         match = re.search(pattern, text)
 
         if match:
@@ -187,9 +124,5 @@ class DataService:
 
         return None
 
-
-# ======================================================
-# Singleton
-# ======================================================
 
 data_service = DataService()
